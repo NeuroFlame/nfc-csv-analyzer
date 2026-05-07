@@ -1,0 +1,5 @@
+{
+    "decimal_places": 4,
+    "num_bins": 10,
+    "security_level": "low"
+}
