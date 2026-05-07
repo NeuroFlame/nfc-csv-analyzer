@@ -49,7 +49,7 @@ The computation runs in two federated rounds:
 1. **Round 1 — Local CSV Analysis (per site)**:
     - Each site reads all CSV files in its data directory and merges them using the side-by-side or row-stacking strategy described above.
     - Per-column statistics are computed locally: count, missing value count, type mismatch count, unique value count, mean, variance, standard deviation, median, Q1, Q3, min, and max for numeric columns; count, missing, and unique count for non-numeric columns.
-    - Only sufficient statistics (sums, sums of squares, counts) are shared — no raw subject data leaves the site.
+    - Only sufficient statistics (sums, sums of squares, counts, and pairwise cross-product sums for all numeric column pairs) are shared — no raw subject data leaves the site.
     - The server aggregates these into a **global report** containing pooled statistics and a column parallelism analysis (classifying each column as `universal`, `partial`, or `type_conflict` across sites).
     - The global report is broadcast back to all sites.
 
@@ -80,6 +80,9 @@ The HTML report is divided into the following sections, subject to the `security
 - **Summary Header**: Total sites, total subjects, universal column count, and a per-site colour legend. Always shown.
 - **Data Structure**: A site × column presence matrix showing which columns exist at which sites and their inferred types, with callout cards flagging partial or type-conflicting columns. Always shown.
 - **Global Descriptive Statistics**: Per-column cards showing per-site and globally pooled values for count, mean, standard deviation, min, median, and max (numeric columns), or count, unique values, and missing count (non-numeric columns). **Shown only when `security_level` is `low`.**
+- **Correlation Structure**: Per-site and global Pearson correlation matrices computed from the federated cross-product sums — no raw data exchanged. Colour-coded by direction and strength. **Shown only when `security_level` is `low` and at least 2 universal numeric columns are present.**
+- **Site Effects**: A table of z-scores comparing each site's column mean to the global mean, with sites flagged when their mean deviates by more than 0.5 standard deviations. Intended as an exploratory indicator rather than a formal test. **Shown only when `security_level` is `low`.**
+- **Sample Size Guidance**: Per-site and combined subjects-per-predictor ratio cards, rated Good / Adequate / Low based on the 10× and 20× rules of thumb. Always shown.
 - **Histogram Compatibility**: Smooth overlapping distribution curves per column with three compatibility metrics. Always shown.
     - **Overlap Coefficient**: Fraction of distributional overlap between sites (compatible if ≥ 0.70).
     - **KL Divergence**: Information-theoretic divergence between site and global distributions (compatible if ≤ 0.10).
