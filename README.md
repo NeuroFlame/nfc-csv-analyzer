@@ -23,21 +23,36 @@ Each participating site reads its local CSV file(s), computes per-column statist
 
 Privacy note: Global mean, variance, and correlation are computed exactly using sufficient statistics (counts, sums, sums of squares, and cross-product sums). Median and quartiles are reported per-site only. No raw subject data leaves any site.
 
-## Computation Flow
+## Architecture
 
-**Round 1 — Local CSV Analysis**
+This computation is authored against [computation-nvflare-boilerplate](https://github.com/NeuroFlame/computation-nvflare-boilerplate).
+Only `app/code/computation/` is computation-specific; `app/code/framework/`,
+`app/code/runtime/`, `app/config/`, `system/`, and the tooling scripts are
+boilerplate-managed and are updated with `scripts/migrate_computation.py`
+from the boilerplate repository.
 
-1. Server broadcasts `ANALYZE_CSV` task to all sites
-2. Each site reads local CSV(s), computes column-level stats and cross-product sums, returns summary (no raw data)
-3. Server aggregates all site results into a global report with pooled statistics and column parallelism analysis
-4. Server broadcasts `ACCEPT_GLOBAL_REPORT` back to sites for local saving
+The workflow is declared in `app/code/computation/spec.py`:
 
-**Round 2 — Histogram Computation**
+| Step | Runs on | Function | Purpose |
+|---|---|---|---|
+| `local_step` | sites | `inputs.load_site_tables` → `local_math.analyze_csv` | Validate parameters, read the site's CSVs, compute column stats and cross-product sums (no raw data) |
+| `remote_step` | central | `remote_math.build_global_csv_report` | Pool statistics into the global report, classify column parallelism, and generate histogram bins for every universal column |
+| `local_step` | sites | `local_math.compute_histograms` | Count local values into the shared bins |
+| `remote_step` | central | `remote_math.build_histogram_report` | Compute compatibility metrics and regression-readiness analysis, and render the HTML report |
+| `site_output_step` | sites | `results.build_site_outputs` | Write the local and global JSON results and `index.html` |
 
-5. Server auto-generates histogram bin edges for each universal numeric column from the global min/max, then broadcasts `COMPUTE_HISTOGRAMS` with the bin config
-6. Each site counts its local values into the shared bin edges and returns the counts
-7. Server aggregates per-site counts, computes compatibility metrics and regression-readiness analysis, generates the HTML report
-8. Server broadcasts `ACCEPT_HISTOGRAM_REPORT` to all sites; each site saves the report locally
+| Module | Role |
+|---|---|
+| `computation/csv_analysis.py` | Type inference and per-column statistics |
+| `computation/histograms.py` | Local histogram binning |
+| `computation/compatibility.py` | Overlap, KL divergence and chi-squared homogeneity |
+| `computation/regression.py` | Federated correlations, site effects, sample size guidance |
+| `computation/report.py` | Self-contained HTML report |
+
+Numeric columns are binned with `num_bins` equal-width bins between the global
+min and max; boolean and string columns are binned by category label. When no
+column is universal, the histogram round still runs and the report explains
+that no histograms were compared.
 
 ## Input Format
 
@@ -68,7 +83,7 @@ Edit `test_data/server/parameters.json`:
 
 ## Output Files
 
-Results appear in `test_output/` at each site:
+Results appear in `test_output/simulate_job/<site>/` for each site:
 
 | File | Description |
 |---|---|
@@ -90,7 +105,21 @@ The HTML report contains the following sections (subject to `security_level`):
 
 ## Running
 
+Run the NVFlare simulator in Docker against `test_data/`:
+
 ```bash
-pip install nvflare
-python debug.py
+./run_local_simulation.sh site1,site2,site3            # builds Dockerfile-dev, then simulates
+./run_local_simulation.sh site1,site2,site3 --no-build # reuse the image after code-only changes
 ```
+
+Lint, format-check, compile, and unit tests:
+
+```bash
+make check
+```
+
+For an interactive shell in the dev image, use `./dockerRun.sh`.
+
+Publishing production images uses `./dockerPush.sh` (a wrapper for
+`scripts/publish_computation_image.py`) with the image coordinates in
+`.neuroflame.json`.

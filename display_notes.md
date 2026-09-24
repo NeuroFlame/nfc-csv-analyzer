@@ -16,7 +16,7 @@ This computation performs a federated CSV analysis on datasets provided in `.csv
 
 | Variable Name | Type | Description | Allowed Options | Default | Required |
 | --- | --- | --- | --- | --- | --- |
-| `decimal_places` | `integer` | Number of decimal places to round all computed statistics to. | any positive integer | `4` | ❌ false |
+| `decimal_places` | `integer` | Number of decimal places to round all computed statistics to. | any non-negative integer | `4` | ❌ false |
 | `num_bins` | `integer` | Number of histogram bins to use for each numeric column. Bin edges are auto-generated from the global min/max discovered in round 1. | any positive integer | `10` | ❌ false |
 | `security_level` | `string` | Controls how much aggregated information is included in the output report. When set to `high`, the Global Descriptive Statistics section (which includes pooled means, standard deviations, and per-site breakdowns) is omitted from the report. Histogram compatibility charts and metrics are always shown regardless of this setting. | `low`, `high` | `low` | ❌ false |
 
@@ -54,7 +54,7 @@ The computation runs in two federated rounds:
     - The global report is broadcast back to all sites.
 
 2. **Round 2 — Histogram Computation (per site)**:
-    - The server auto-generates histogram bin edges for every universal numeric column using the global min and max from round 1, divided into `num_bins` equal-width bins.
+    - The server auto-generates histogram bins for every universal column: numeric columns use `num_bins` equal-width bins between the global min and max from round 1; boolean and string columns use their category labels.
     - Each site counts its local values into these shared bin edges and returns the counts.
     - The server aggregates the per-site counts and computes three compatibility metrics per column: **Overlap Coefficient**, **KL Divergence**, and a **Chi-Squared homogeneity test**.
     - The final HTML report is generated and broadcast to all sites. The contents of the report are determined by the `security_level` parameter.
