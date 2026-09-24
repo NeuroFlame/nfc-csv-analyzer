@@ -184,11 +184,7 @@ class RemoteMathTests(unittest.TestCase):
         self.assertAlmostEqual(stats["global_mean"], statistics.mean(all_values))
         self.assertEqual((stats["global_min"], stats["global_max"]), (1.0, 10.0))
 
-    @unittest.expectedFailure
     def test_pooled_std_dev_matches_sample_std_dev(self):
-        # Known issue carried over from the pre-migration aggregator: sites
-        # report population variance (divide by n) but pooling treats it as
-        # sample variance ((n_i - 1) * var_i), understating global_std_dev.
         site_values = {"s1": [1.0, 2.0, 3.0, 10.0], "s2": [4.0, 5.0], "s3": [7.5]}
         site_results = {}
         for site, values in site_values.items():
@@ -200,6 +196,9 @@ class RemoteMathTests(unittest.TestCase):
         all_values = [v for values in site_values.values() for v in values]
         self.assertAlmostEqual(
             stats["global_std_dev"], statistics.stdev(all_values), places=6
+        )
+        self.assertAlmostEqual(
+            stats["global_variance"], statistics.variance(all_values), places=6
         )
 
     def test_bin_config_uses_only_universal_columns(self):

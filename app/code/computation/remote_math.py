@@ -268,15 +268,15 @@ def _aggregate_column(
         total_sum = sum(cs.get("sum", 0) or 0 for cs in col_stats_per_site.values())
         global_mean = (total_sum / total_count) if total_count > 0 else None
 
+        # Site variances are population variances (divided by n_i), so each
+        # site's within-site sum of squared deviations is n_i * var_i.
         weighted_var_sum = 0.0
         for cs in col_stats_per_site.values():
             n_i = cs.get("count", 0) or 0
             var_i = cs.get("variance", 0) or 0
             mean_i = cs.get("mean") or 0
             if n_i > 0 and global_mean is not None:
-                weighted_var_sum += (n_i - 1) * var_i + n_i * (
-                    mean_i - global_mean
-                ) ** 2
+                weighted_var_sum += n_i * var_i + n_i * (mean_i - global_mean) ** 2
 
         global_variance = (
             weighted_var_sum / (total_count - 1) if total_count > 1 else 0.0
