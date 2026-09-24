@@ -8,19 +8,20 @@
   "components": [
     {
       "id": "aggregator",
-      "path": "aggregator.aggregator.MyAggregator",
+      "path": "runtime.aggregator.RuntimeAggregator",
+      "args": {}
+    },
+    {
+      "id": "artifact_transfer",
+      "path": "framework.artifact_transfer.ArtifactTransfer",
       "args": {}
     }
   ],
   "workflows": [
     {
       "id": "controller",
-      "path": "controller.controller.MyController",
-      "args": {
-        "min_clients": 2,
-        "wait_time_after_min_received": 10,
-        "task_timeout": 0
-      }
+      "path": "runtime.controller.RuntimeController",
+      "args": {}
     }
   ]
 }

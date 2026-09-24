@@ -2,19 +2,20 @@
   "format_version": 2,
   "executors": [
     {
-      "tasks": [
-        "ANALYZE_CSV",
-        "ACCEPT_GLOBAL_REPORT",
-        "COMPUTE_HISTOGRAMS",
-        "ACCEPT_HISTOGRAM_REPORT"
-      ],
+      "tasks": [],
       "executor": {
-        "path": "executor.executor.MyExecutor",
+        "path": "runtime.executor.RuntimeExecutor",
         "args": {}
       }
     }
   ],
   "task_result_filters": [],
   "task_data_filters": [],
-  "components": []
+  "components": [
+    {
+      "id": "artifact_transfer",
+      "path": "framework.artifact_transfer.ArtifactTransfer",
+      "args": {}
+    }
+  ]
 }
