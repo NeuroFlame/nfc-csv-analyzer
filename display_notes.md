@@ -1,5 +1,7 @@
 **Source code:** [https://github.com/NeuroFlame/nfc-csv-analyzer](https://github.com/NeuroFlame/nfc-csv-analyzer)
 
+&nbsp;
+
 ### Overview
 
 This computation performs a federated CSV analysis on datasets provided in `.csv` format from multiple sites. It automatically discovers all columns, infers their data types, and computes descriptive statistics locally at each site. The server aggregates these into a global report and auto-generates histogram bin edges from the global data range. Sites then compute local histogram counts which are aggregated to produce distribution compatibility metrics across sites. The final output is an interactive HTML report summarising data structure, descriptive statistics, and histogram compatibility for all columns. No raw subject-level data leaves any site at any point.
